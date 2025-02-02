@@ -26,8 +26,6 @@ import androidx.compose.ui.unit.dp
 import com.example.spinnerjetpackcompose.ui.theme.SpinnerJetpackComposeTheme
 
 class MainActivity : ComponentActivity() {
-
-
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
         enableEdgeToEdge()
