@@ -3,129 +3,108 @@ package com.example.spinnerjetpackcompose
 import android.os.Bundle
 import androidx.activity.ComponentActivity
 import androidx.activity.compose.setContent
-import androidx.compose.foundation.background
-import androidx.compose.foundation.clickable
-import androidx.compose.foundation.layout.*
-import androidx.compose.material.*
+import androidx.activity.enableEdgeToEdge
+import androidx.compose.foundation.layout.Column
+import androidx.compose.foundation.layout.padding
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.KeyboardArrowDown
-import androidx.compose.runtime.*
+import androidx.compose.material.icons.filled.KeyboardArrowUp
+import androidx.compose.material3.DropdownMenu
+import androidx.compose.material3.DropdownMenuItem
+import androidx.compose.material3.Icon
+import androidx.compose.material3.OutlinedButton
+import androidx.compose.material3.Scaffold
+import androidx.compose.material3.Text
+import androidx.compose.runtime.Composable
+import androidx.compose.runtime.getValue
+import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.saveable.rememberSaveable
+import androidx.compose.runtime.setValue
 import androidx.compose.ui.Modifier
-import androidx.compose.ui.graphics.Color
-import androidx.compose.ui.tooling.preview.Preview
+import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.unit.dp
-import androidx.lifecycle.ViewModel
-import androidx.lifecycle.viewModelScope
-import androidx.lifecycle.viewmodel.compose.viewModel
 import com.example.spinnerjetpackcompose.ui.theme.SpinnerJetpackComposeTheme
-import kotlinx.coroutines.delay
-import kotlinx.coroutines.launch
 
 class MainActivity : ComponentActivity() {
+
+
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
+        enableEdgeToEdge()
         setContent {
             SpinnerJetpackComposeTheme {
-               MyApp()
+                val names = listOf<String>("Jordan", "Leonard")
+                var selectedName by rememberSaveable { mutableStateOf("Jordan") }
+                Scaffold { padding ->
+                    Column(
+                        modifier = Modifier
+                            .padding(padding),
+                        ) {
+                        Text(selectedName)
+                        Spinner(
+                            itemList = names,
+                            selectedItem = selectedName,
+                            modifier = Modifier.padding(4.dp),
+                            onItemSelected = { selectedName = it }
+                        )
+                    }
+                }
             }
         }
     }
-}
 
-class AppViewModel : ViewModel(){
-    val gender: MutableState<String> = mutableStateOf("Male")
-    val name: MutableState<String> = mutableStateOf("Jordan")
-
-    val names: MutableState<List<String>> = mutableStateOf(listOf())
-    init {
-        viewModelScope.launch {
-            delay(3000)
-            names.value = listOf("Jordan", "Leonard")
+    @Composable
+    fun Spinner(
+        itemList: List<String>,
+        selectedItem: String,
+        onItemSelected: (selectedItem: String) -> Unit,
+        modifier: Modifier = Modifier,
+    ) {
+        // Check to see if DropDown List should be shown:
+        var expanded by rememberSaveable {
+            mutableStateOf(false)
         }
-    }
-}
 
-@Composable
-fun MyApp(appViewModel: AppViewModel = viewModel()){
-    if (appViewModel.names.value.isNotEmpty()){
-        Column {
-            Text(text = "Currently Selected Name: ${appViewModel.name.value}")
-            Text(text = "Currently Selected Gender: ${appViewModel.gender.value}")
-            Row {
-                DropDownMenu(
-                    items = appViewModel.names.value,
-                    selectedItem = appViewModel.name.value,
-                    onValueChange = { appViewModel.name.value = it },
-                    modifier = Modifier.weight(1f)
-                )
-                DropDownMenu(
-                    items = listOf("Male", "Female"),
-                    selectedItem = appViewModel.gender.value,
-                    onValueChange = { appViewModel.gender.value = it },
-                    modifier = Modifier.weight(1f)
-                )
-            }
+        var tempSelectedItem = selectedItem
+
+        // Automatically selects first item if nothing is selected:
+        if (tempSelectedItem.isBlank() && itemList.isNotEmpty()) {
+            tempSelectedItem = itemList.first()
+            onItemSelected(tempSelectedItem)
         }
-    }else {
-        Text(text = "Loading Data...")
-    }
 
-}
+        // The Spinner itself:
+        OutlinedButton(onClick = {
+            expanded = !expanded
+        },  enabled = itemList.isNotEmpty(),
+            modifier = modifier) {
 
-@Composable
-fun DropDownMenu(
-    modifier: Modifier = Modifier,
-    items: List<String>,
-    selectedItem: String,
-    dropdownLabel: String = "",
-    onValueChange: (String) -> Unit,
-) {
-    var expanded by rememberSaveable {
-        mutableStateOf(false)
-    }
-
-    Box (modifier = modifier
-        .fillMaxWidth()
-        .padding(4.dp)){
-        Column {
-            if (dropdownLabel.isNotEmpty()){
-                Text(dropdownLabel)
-            }
-            TextField(
-                value = selectedItem,
-                onValueChange = onValueChange,
-                trailingIcon = { Icon(Icons.Default.KeyboardArrowDown, contentDescription = null) },
-                modifier = Modifier.fillMaxWidth()
+            // The text for the Selected Item:
+            Text(
+                text = tempSelectedItem,
+                modifier = Modifier.weight(1f),
+                overflow = TextOverflow.Ellipsis,
+                maxLines = 1
             )
 
-        }
-        Spacer(modifier = Modifier
-            .matchParentSize()
-            .background(Color.Transparent)
-            .clickable { expanded = true })
-        DropdownMenu(
-            expanded = expanded,
-            onDismissRequest = { expanded = false }
-        ) {
-            items.forEach {
-                    item -> DropdownMenuItem(
-                onClick = {
-                    onValueChange(item)
-                    expanded = false
-                },
-            ) {
-                Text(text = item)
-            }
+            // Changes Icon if DropDown List is expanded or not:
+            Icon(if (expanded) Icons.Filled.KeyboardArrowUp else Icons.Filled.KeyboardArrowDown,
+                contentDescription = null)
+
+            // Fills up DropDownMenu based on Items passed in:
+            DropdownMenu(
+                expanded = expanded,
+                onDismissRequest = { expanded = false }) {
+                itemList.forEach { item ->
+                    DropdownMenuItem(text = {
+                        Text(text = item)
+                    },
+                        onClick = {
+                            onItemSelected(item)
+                            expanded = false
+                        })
+                }
             }
         }
     }
-
-}
-
-
-@Preview(showBackground = true)
-@Composable
-fun PreviewDropDown() {
-
 }
